@@ -1,219 +1,304 @@
 
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>منصة التعاميم المدرسية</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>منصة تبليغات وتعاميم مدرسة عبدالله بن مسعود</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,Arial;background:#f3f6f4;color:#24352c}
-header{background:linear-gradient(135deg,#075b3c,#16865a);color:white;padding:25px 16px;text-align:center}
-header h2{margin:5px 0;font-size:21px}
-header p{margin:7px 0;font-size:13px}
-.container{max-width:850px;margin:auto;padding:15px}
-.card{background:white;border-radius:14px;padding:17px;margin-bottom:15px;box-shadow:0 3px 12px #0000000c}
+body{margin:0;background:#f3f6f4;color:#24352c;font-family:Tahoma,Arial}
+header{background:linear-gradient(135deg,#064b36,#16865a);color:white;text-align:center;padding:24px 12px}
+header h2{font-size:20px;margin:8px 0}
+header p{margin:5px;font-size:13px}
+.container{max-width:900px;margin:auto;padding:15px}
+.card{background:white;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 3px 12px #0001}
 h3{color:#087348;margin-top:0}
-label{display:block;margin:12px 0 6px;font-weight:bold;font-size:14px}
-input,textarea,select{width:100%;padding:12px;border:1px solid #d5dfd8;border-radius:9px;font:inherit;background:#fff}
-textarea{min-height:100px;resize:vertical}
-button{border:0;border-radius:9px;padding:12px 17px;font:inherit;cursor:pointer;margin:4px}
+label{display:block;font-weight:bold;margin:12px 0 6px;font-size:14px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d5dfd8;border-radius:9px;font:inherit;background:white}
+textarea{min-height:90px}
+button{border:0;border-radius:9px;padding:12px 17px;margin:4px;font:inherit;cursor:pointer}
 .primary{background:#087348;color:white}
 .secondary{background:#e9f2ed;color:#075b3c}
-.warning{background:#fff1d5;color:#805600}
 .danger{background:#fce8e8;color:#a52b2b}
-.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:15px}
-.tabs button{flex:1;min-width:100px}
 .hidden{display:none!important}
-.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;background:#eee}
-.pending{background:#fff0d4;color:#805600}
+.item{border:1px solid #e1e9e3;border-radius:10px;padding:14px;margin:10px 0}
+.small{font-size:12px;color:#718078;line-height:1.8}
+.status{display:inline-block;padding:5px 10px;border-radius:20px;background:#fff0d4;color:#805600;font-size:12px}
 .approved{background:#dff4e7;color:#087348}
-.rejected{background:#fde7e7;color:#a52b2b}
-.item{border:1px solid #e1e9e3;border-radius:10px;padding:13px;margin:10px 0}
-.item h4{margin:0 0 8px}
-.small{font-size:12px;color:#718078}
-footer{text-align:center;padding:22px 10px;color:#35664c;font-size:13px;line-height:2}
-hr{border:0;border-top:1px solid #e5ece7;margin:15px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#edf6f0;padding:15px;border-radius:10px;text-align:center}
+.stat b{display:block;font-size:23px;color:#087348;margin-top:6px}
+footer{text-align:center;padding:22px;font-size:13px;color:#35664c;line-height:2}
 </style>
 </head>
 <body>
 
 <header>
 <div style="font-size:30px">📑</div>
-<h2>منصة التعاميم المدرسية</h2>
-<p>مدرسة عبدالله بن مسعود الابتدائية</p>
-<p>إدارة التعليم بمنطقة الجوف – وزارة التعليم</p>
+<p>وزارة التعليم</p>
+<p>الإدارة العامة للتعليم بمنطقة الجوف</p>
+<h2>منصة تبليغات وتعاميم مدرسة عبدالله بن مسعود الابتدائية</h2>
 </header>
 
 <div class="container">
 
+<div id="login" class="card">
+<h3>دخول مدير المنصة</h3>
+<label>البريد الإلكتروني</label>
+<input id="email" type="email" placeholder="البريد الإلكتروني">
+<label>كلمة المرور</label>
+<input id="password" type="password" placeholder="كلمة المرور">
+<button class="primary" style="width:100%" onclick="login()">تسجيل الدخول</button>
+<p id="loginMsg" class="small"></p>
+</div>
+
+<div id="app" class="hidden">
 <div class="card">
-<h3>مرحبًا بك في منصة التعاميم</h3>
-<label>اختر واجهة العمل</label>
-<select id="role" onchange="changeRole()">
-<option value="assistant">المساعد الإداري – إعداد وإرسال التعاميم</option>
-<option value="director">مدير المدرسة – مراجعة واعتماد التعاميم</option>
-</select>
-<p class="small">تجربة أولية للواجهات وسير العمل.</p>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+<h3>لوحة المدير</h3>
+<button class="danger" onclick="logout()">تسجيل الخروج</button>
+</div>
+<div class="stats">
+<div class="stat">إجمالي التعاميم<b id="total">0</b></div>
+<div class="stat">بانتظار الاعتماد<b id="pending">0</b></div>
+</div>
 </div>
 
-<div id="assistant">
-<div class="tabs">
-<button class="primary" onclick="showSection('create')">إنشاء تعميم</button>
-<button class="secondary" onclick="showSection('list')">التعاميم</button>
-</div>
-
-<div id="create" class="card">
+<div class="card">
 <h3>إنشاء تعميم جديد</h3>
-<label>موضوع التعميم</label>
-<input id="subject" placeholder="اكتب موضوع التعميم">
 <label>رقم التعميم</label>
 <input id="number" placeholder="رقم التعميم">
 <label>تاريخ التعميم</label>
 <input id="date" type="date">
+<label>موضوع التعميم</label>
+<input id="subject" placeholder="موضوع التعميم">
 <label>الجهة المصدرة</label>
-<input id="source" placeholder="الوزارة / إدارة التعليم / جهة أخرى">
+<input id="authority" placeholder="الوزارة أو إدارة التعليم">
 <label>محتوى التعميم</label>
-<textarea id="content" placeholder="اكتب محتوى التعميم هنا"></textarea>
-<label>رابط ملف التعميم (اختياري)</label>
-<input id="link" type="url" placeholder="https://">
+<textarea id="content" placeholder="اكتب محتوى التعميم"></textarea>
 <label>الفئة المستهدفة</label>
 <select id="target">
 <option>جميع الموظفين</option>
-<option>المعلمين</option>
-<option>الإداريين</option>
+<option>المعلمون</option>
+<option>الإداريون</option>
 </select>
-<button class="primary" style="width:100%" onclick="createCircular()">إرسال للمدير للاعتماد</button>
+<label>ملاحظات للمستلمين</label>
+<textarea id="note" placeholder="ملاحظات اختيارية"></textarea>
+<label>ملف التعميم PDF (اختياري)</label>
+<input id="pdf" type="file" accept="application/pdf">
+<button class="primary" style="width:100%" onclick="createCircular()">حفظ التعميم</button>
+<p id="createMsg" class="small"></p>
 </div>
 
-<div id="list" class="card hidden">
+<div class="card">
 <h3>سجل التعاميم</h3>
-<div id="assistantList"></div>
+<button class="secondary" onclick="loadCirculars()">تحديث السجل</button>
+<div id="circularList"><p class="small">جارٍ تحميل التعاميم...</p></div>
 </div>
-</div>
-
-<div id="director" class="hidden">
-<div class="card">
-<h3>لوحة اعتماد مدير المدرسة</h3>
-<p class="small">راجع التعاميم قبل اعتمادها وإتاحتها للإرسال.</p>
-<div id="directorList"></div>
-</div>
-</div>
-
-<div class="card">
-<h3>مراحل سير التعميم</h3>
-<div class="item">① <b>إعداد التعميم</b><p class="small">المساعد الإداري</p></div>
-<div class="item">② <b>المراجعة والاعتماد</b><p class="small">مدير المدرسة</p></div>
-<div class="item">③ <b>التعميم والمتابعة</b><p class="small">المساعد الإداري</p></div>
 </div>
 
 <footer>
 <hr>
 <strong>إعداد وتصميم: مساعد إداري / خالد شاقي الرويلي</strong><br>
-مدرسة عبدالله بن مسعود الابتدائية<br>
-جميع الحقوق محفوظة
+مدرسة عبدالله بن مسعود الابتدائية
 </footer>
 </div>
 
 <script>
-let circulars = JSON.parse(localStorage.getItem("schoolCirculars") || "[]");
+const SUPABASE_URL = "https://dfraanyolhzqqypkkcbn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_lP0Hcv0OKe2PWnksDigP2Q_KaWxmfCV";
 
-function save(){
-localStorage.setItem("schoolCirculars",JSON.stringify(circulars));
-}
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-function changeRole(){
-let role=document.getElementById("role").value;
-document.getElementById("assistant").classList.toggle("hidden",role!=="assistant");
-document.getElementById("director").classList.toggle("hidden",role!=="director");
-render();
-}
-
-function showSection(id){
-document.getElementById("create").classList.toggle("hidden",id!=="create");
-document.getElementById("list").classList.toggle("hidden",id!=="list");
-render();
-}
-
-function createCircular(){
-let subject=document.getElementById("subject").value.trim();
-let content=document.getElementById("content").value.trim();
-if(!subject||!content){
-alert("يرجى إدخال موضوع التعميم ومحتواه");
-return;
-}
-circulars.unshift({
-id:Date.now(),
-subject,
-number:document.getElementById("number").value,
-date:document.getElementById("date").value,
-source:document.getElementById("source").value,
-content,
-link:document.getElementById("link").value,
-target:document.getElementById("target").value,
-status:"pending"
-});
-save();
-["subject","number","date","source","content","link"].forEach(id=>document.getElementById(id).value="");
-alert("تم حفظ التعميم وإرساله إلى قائمة اعتماد المدير");
-render();
-showSection("list");
-}
-
-function approve(id){
-let c=circulars.find(x=>x.id===id);
-if(c){c.status="approved";save();render();}
-}
-
-function reject(id){
-let c=circulars.find(x=>x.id===id);
-if(c){c.status="rejected";save();render();}
-}
-
-function sendCircular(id){
-let c=circulars.find(x=>x.id===id);
-if(!c||c.status!=="approved")return;
-alert("التعميم معتمد وجاهز للتعميم. ربط الإرسال الفعلي عبر واتساب سيضاف في مرحلة الربط بالخدمات الخلفية.");
-}
-
-function render(){
-let a=document.getElementById("assistantList");
-let d=document.getElementById("directorList");
-a.innerHTML="";
-d.innerHTML="";
-if(!circulars.length){
-a.innerHTML=d.innerHTML='<p class="small">لا توجد تعاميم حتى الآن.</p>';
-return;
-}
-circulars.forEach(c=>{
-let status=c.status==="pending"?'بانتظار الاعتماد':c.status==="approved"?'معتمد وجاهز للإرسال':'معاد للتعديل';
-let cls=c.status==="pending"?'pending':c.status==="approved"?'approved':'rejected';
-let details=`<h4>${escapeHTML(c.subject)}</h4>
-<p class="small">رقم التعميم: ${escapeHTML(c.number||"غير محدد")} | التاريخ: ${escapeHTML(c.date||"غير محدد")}</p>
-<p>${escapeHTML(c.content)}</p>
-<p class="small">الجهة: ${escapeHTML(c.source||"غير محددة")} | المستهدفون: ${escapeHTML(c.target)}</p>
-${c.link?`<p><a href="${escapeAttr(c.link)}" target="_blank" rel="noopener">فتح المرفق</a></p>`:""}
-<span class="status ${cls}">${status}</span>`;
-a.innerHTML+=`<div class="item">${details}
-${c.status==="approved"?`<button class="primary" onclick="sendCircular(${c.id})">تعميم عبر واتساب</button>`:""}
-</div>`;
-d.innerHTML+=`<div class="item">${details}
-${c.status==="pending"?`
-<button class="primary" onclick="approve(${c.id})">اعتماد التعميم</button>
-<button class="danger" onclick="reject(${c.id})">إعادة للتعديل</button>`:""}
-</div>`;
-});
+function msg(id,text){
+ document.getElementById(id).textContent=text;
 }
 
 function escapeHTML(value){
-return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
 }
-function escapeAttr(value){
-return escapeHTML(value);
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||!password){msg("loginMsg","أدخل البريد وكلمة المرور");return;}
+
+ msg("loginMsg","جارٍ تسجيل الدخول...");
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg("loginMsg","تعذر الدخول: "+error.message);return;}
+ await checkSession();
 }
-document.getElementById("date").value=new Date().toISOString().slice(0,10);
-render();
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+async function checkSession(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){
+  document.getElementById("login").classList.remove("hidden");
+  document.getElementById("app").classList.add("hidden");
+  return;
+ }
+
+ const {data:admin,error}=await db
+  .from("notif_admins")
+  .select("user_id")
+  .eq("user_id",session.user.id)
+  .maybeSingle();
+
+ if(error||!admin){
+  await db.auth.signOut();
+  msg("loginMsg","هذا الحساب غير مصرح له بإدارة المنصة.");
+  return;
+ }
+
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ await loadCirculars();
+}
+
+async function createCircular(){
+ const subject=document.getElementById("subject").value.trim();
+ const content=document.getElementById("content").value.trim();
+ const file=document.getElementById("pdf").files[0];
+
+ if(!subject){msg("createMsg","أدخل موضوع التعميم");return;}
+ if(file && file.type!=="application/pdf"){
+  msg("createMsg","يرجى اختيار ملف PDF فقط");return;
+ }
+
+ msg("createMsg","جارٍ حفظ التعميم...");
+
+ let pdfPath=null;
+
+ if(file){
+  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const path="circulars/"+crypto.randomUUID()+"-"+safeName;
+  const {error:uploadError}=await db.storage
+   .from("notif-files").upload(path,file,{contentType:"application/pdf"});
+
+  if(uploadError){
+   msg("createMsg","تعذر رفع الملف: "+uploadError.message);return;
+  }
+  pdfPath=path;
+ }
+
+ const record={
+  circular_number:document.getElementById("number").value.trim(),
+  circular_date:document.getElementById("date").value||null,
+  subject:subject,
+  issuing_authority:document.getElementById("authority").value.trim(),
+  recipient_note:document.getElementById("note").value.trim(),
+  content:content,
+  target:document.getElementById("target").value,
+  pdf_path:pdfPath,
+  status:"draft"
+ };
+
+ const {error}=await db.from("notif_circulars").insert(record);
+
+ if(error){
+  msg("createMsg","تعذر حفظ التعميم: "+error.message);return;
+ }
+
+ ["number","subject","authority","content","note","pdf"].forEach(id=>{
+  document.getElementById(id).value="";
+ });
+ msg("createMsg","تم حفظ التعميم بنجاح.");
+ await loadCirculars();
+}
+
+async function loadCirculars(){
+ const {data,error}=await db.from("notif_circulars")
+  .select("*").order("created_at",{ascending:false});
+
+ if(error){
+  document.getElementById("circularList").innerHTML=
+   '<p class="small">تعذر تحميل البيانات: '+escapeHTML(error.message)+'</p>';
+  return;
+ }
+
+ const rows=data||[];
+ document.getElementById("total").textContent=rows.length;
+ document.getElementById("pending").textContent=
+  rows.filter(x=>x.status==="draft").length;
+
+ const list=document.getElementById("circularList");
+ if(!rows.length){
+  list.innerHTML='<p class="small">لا توجد تعاميم حتى الآن.</p>';
+  return;
+ }
+
+ list.innerHTML="";
+ for(const c of rows){
+  const approved=c.status==="approved";
+  const status=approved?"معتمد":"مسودة بانتظار الاعتماد";
+  const item=document.createElement("div");
+  item.className="item";
+
+  item.innerHTML=`
+   <h4>${escapeHTML(c.subject)}</h4>
+   <p class="small">رقم التعميم: ${escapeHTML(c.circular_number||"غير محدد")}</p>
+   <p class="small">التاريخ: ${escapeHTML(c.circular_date||"غير محدد")}</p>
+   <p>${escapeHTML(c.content||"")}</p>
+   <p class="small">الجهة: ${escapeHTML(c.issuing_authority||"غير محددة")}</p>
+   <p class="small">الفئة المستهدفة: ${escapeHTML(c.target||"غير محددة")}</p>
+   <span class="status ${approved?"approved":""}">${status}</span>
+   <div class="actions"></div>`;
+
+  const actions=item.querySelector(".actions");
+
+  if(c.pdf_path){
+   const fileButton=document.createElement("button");
+   fileButton.className="secondary";
+   fileButton.textContent="فتح ملف PDF";
+   fileButton.onclick=()=>openPDF(c.pdf_path);
+   actions.appendChild(fileButton);
+  }
+
+  if(!approved){
+   const approveButton=document.createElement("button");
+   approveButton.className="primary";
+   approveButton.textContent="اعتماد التعميم";
+   approveButton.onclick=()=>approveCircular(c.id);
+   actions.appendChild(approveButton);
+  }
+
+  list.appendChild(item);
+ }
+}
+
+async function openPDF(path){
+ const {data,error}=await db.storage.from("notif-files")
+  .createSignedUrl(path,300);
+ if(error){alert("تعذر فتح الملف: "+error.message);return;}
+ window.open(data.signedUrl,"_blank","noopener");
+}
+
+async function approveCircular(id){
+ if(!confirm("هل تريد اعتماد هذا التعميم؟"))return;
+
+ const {error}=await db.from("notif_circulars")
+  .update({status:"approved"}).eq("id",id);
+
+ if(error){alert("تعذر الاعتماد: "+error.message);return;}
+ await loadCirculars();
+}
+
+document.getElementById("date").value=
+ new Date().toLocaleDateString("en-CA");
+
+db.auth.onAuthStateChange(()=>{
+ setTimeout(checkSession,0);
+});
+
+checkSession();
 </script>
 </body>
 </html>
